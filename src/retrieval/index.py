@@ -28,6 +28,8 @@ class LocalEmbeddingIndex:
         collection_name: str,
         documents: list[dict[str, Any]],
         persist_path: Path,
+        client: chromadb.PersistentClient | None = None,
+        collection: chromadb.Collection | None = None,
     ):
         self.settings = settings
         self.collection_name = collection_name
@@ -35,8 +37,8 @@ class LocalEmbeddingIndex:
         self.persist_path = persist_path
         self.embedding_backend = "chroma"
         self.embedding_model = MiniLMEmbeddings(settings.embedding_model)
-        self.client = chromadb.PersistentClient(path=str(persist_path))
-        self.collection = self.client.get_collection(name=collection_name)
+        self.client = client or chromadb.PersistentClient(path=str(persist_path))
+        self.collection = collection or self.client.get_collection(name=collection_name)
         self.documents_by_paper_id = {document["paper_id"].lower(): document for document in documents}
         self.documents_by_title = {document["title"].lower(): document for document in documents}
 
@@ -94,14 +96,14 @@ class LocalEmbeddingIndex:
 
         embedding_model = MiniLMEmbeddings(settings.embedding_model)
         client = chromadb.PersistentClient(path=str(persist_path))
-        try:
-            client.delete_collection(name=collection_name)
-        except Exception:
-            pass
-        collection = client.create_collection(
+        collection = client.get_or_create_collection(
             name=collection_name,
-            configuration={"hnsw": {"space": "cosine"}},
+            metadata={"hnsw:space": "cosine"},
         )
+        existing = collection.get()
+        if existing and existing.get("ids"):
+            collection.delete(ids=existing["ids"])
+
         embeddings = embedding_model.embed_documents([document["content"] for document in documents])
         collection.add(
             ids=[document["record_id"] for document in documents],
@@ -126,6 +128,8 @@ class LocalEmbeddingIndex:
             collection_name=collection_name,
             documents=documents,
             persist_path=persist_path,
+            client=client,
+            collection=collection,
         )
 
     @classmethod
@@ -140,11 +144,19 @@ class LocalEmbeddingIndex:
 
     def search(self, query: str, top_k: int | None = None) -> list[SearchResult]:
         query_embedding = self.embedding_model.embed_query(query)
-        results = self.collection.query(
-            query_embeddings=[query_embedding],
-            n_results=top_k or self.settings.top_k,
-            include=["documents", "metadatas", "distances"],
-        )
+        try:
+            results = self.collection.query(
+                query_embeddings=[query_embedding],
+                n_results=top_k or self.settings.top_k,
+                include=["documents", "metadatas", "distances"],
+            )
+        except Exception:
+            self.collection = self.client.get_collection(name=self.collection_name)
+            results = self.collection.query(
+                query_embeddings=[query_embedding],
+                n_results=top_k or self.settings.top_k,
+                include=["documents", "metadatas", "distances"],
+            )
         ids = results.get("ids", [[]])[0]
         documents = results.get("documents", [[]])[0]
         metadatas = results.get("metadatas", [[]])[0]
@@ -172,3 +184,4 @@ class LocalEmbeddingIndex:
         if needle in self.documents_by_title:
             return self.documents_by_title[needle]
         return None
+
