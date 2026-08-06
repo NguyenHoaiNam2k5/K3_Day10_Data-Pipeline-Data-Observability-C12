@@ -17,18 +17,24 @@ def build_llm(settings: Settings, temperature: float = 0.0):
             model=settings.model_name,
             google_api_key=settings.google_api_key,
             temperature=temperature,
+            max_retries=1,
+            timeout=10.0,
         )
     if provider == "openai":
         return ChatOpenAI(
             model=settings.model_name,
             api_key=settings.openai_api_key,
             temperature=temperature,
+            max_retries=1,
+            timeout=10.0,
         )
     if provider == "anthropic":
         return ChatAnthropic(
             model=settings.model_name,
             api_key=settings.anthropic_api_key,
             temperature=temperature,
+            max_retries=1,
+            timeout=10.0,
         )
     if provider == "openrouter":
         return ChatOpenAI(
@@ -36,6 +42,8 @@ def build_llm(settings: Settings, temperature: float = 0.0):
             api_key=settings.openrouter_api_key,
             base_url=settings.openrouter_base_url,
             temperature=temperature,
+            max_retries=1,
+            timeout=10.0,
         )
     if provider == "ollama":
         return ChatOllama(
