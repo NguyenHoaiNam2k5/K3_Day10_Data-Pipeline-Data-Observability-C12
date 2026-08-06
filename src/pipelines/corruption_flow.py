@@ -18,14 +18,30 @@ from retrieval.index import LocalEmbeddingIndex
 def main() -> None:
     print("=== [CORRUPTION FLOW] Starting Corruption -> Evaluate -> Repair -> Compare Pipeline ===")
     settings = load_settings()
+    baseline_quality_path = settings.paths.quality_dir / "baseline-quality_quality.json"
 
     # Step 1: Load Baseline Clean Data & Metrics
-    if not settings.paths.clean_csv.exists() or not settings.paths.baseline_metrics.exists():
-        raise RuntimeError("Baseline clean data or metrics missing. Please run Phase 1 baseline pipeline first.")
+    required_baseline_paths = [
+        settings.paths.clean_csv,
+        settings.paths.baseline_metrics,
+        baseline_quality_path,
+        settings.paths.freshness_report,
+    ]
+    missing_baseline_paths = [
+        str(path) for path in required_baseline_paths if not path.exists()
+    ]
+    if missing_baseline_paths:
+        missing_list = "\n".join(f"  - {path}" for path in missing_baseline_paths)
+        raise RuntimeError(
+            "Baseline artifacts missing. Please run Phase 1 baseline pipeline first:\n"
+            f"{missing_list}"
+        )
 
-    print("[1/7] Loading Baseline clean dataset & baseline metrics...")
+    print("[1/7] Loading Baseline clean dataset, metrics, quality & freshness...")
     df_baseline = pd.read_csv(settings.paths.clean_csv)
     baseline_metrics = read_json(settings.paths.baseline_metrics)
+    baseline_quality = read_json(baseline_quality_path)
+    baseline_freshness = read_json(settings.paths.freshness_report)
 
     # Step 2: Corrupt Data
     print("[2/7] Injecting data corruption scenarios...")
@@ -94,6 +110,8 @@ def main() -> None:
         repaired_quality=repaired_quality,
         corrupted_freshness=corrupted_freshness,
         repaired_freshness=repaired_freshness,
+        baseline_quality=baseline_quality,
+        baseline_freshness=baseline_freshness,
     )
 
     print("\n=== [CORRUPTION FLOW SUMMARY] ===")

@@ -1,0 +1,91 @@
+{
+  "report_name": "corrupted_quality",
+  "generated_at": "2026-08-06T05:08:59.691990+00:00",
+  "dataset": {
+    "rows": 23,
+    "columns": [
+      "paper_id",
+      "title",
+      "summary",
+      "authors",
+      "categories",
+      "primary_category",
+      "published",
+      "updated",
+      "abs_url",
+      "pdf_url",
+      "comment",
+      "age_days",
+      "authors_joined",
+      "categories_joined",
+      "summary_chars",
+      "text_for_embedding"
+    ],
+    "unique_paper_ids": 20
+  },
+  "passed": false,
+  "checks": {
+    "schema": {
+      "passed": true,
+      "missing_columns": []
+    },
+    "row_count": {
+      "passed": true,
+      "value": 23,
+      "expected": "> 0"
+    },
+    "paper_id_complete": {
+      "passed": true,
+      "blank_count": 0
+    },
+    "paper_id_unique": {
+      "passed": false,
+      "duplicate_id_count": 3,
+      "duplicate_row_count": 6
+    },
+    "title_complete": {
+      "passed": true,
+      "blank_count": 0
+    },
+    "summary_complete": {
+      "passed": false,
+      "blank_count": 3
+    },
+    "summary_min_length": {
+      "passed": false,
+      "min_chars": 20,
+      "short_count": 3
+    },
+    "summary_chars_consistent": {
+      "passed": true,
+      "mismatch_count": 0
+    },
+    "embedding_text_complete": {
+      "passed": true,
+      "blank_count": 0
+    },
+    "published_valid": {
+      "passed": false,
+      "invalid_count": 4
+    },
+    "age_days_valid": {
+      "passed": false,
+      "invalid_count": 4
+    },
+    "freshness": {
+      "passed": false,
+      "stale_rows": 0,
+      "threshold_days": 180
+    },
+    "source_reconciliation": {
+      "passed": true,
+      "status": "SKIPPED",
+      "reason": "raw_records not provided"
+    },
+    "evaluation_schema": {
+      "passed": true,
+      "status": "SKIPPED",
+      "reason": "eval_set not provided"
+    }
+  }
+}

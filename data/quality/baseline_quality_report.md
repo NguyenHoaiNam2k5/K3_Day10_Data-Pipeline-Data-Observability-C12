@@ -1,52 +1,58 @@
-# Data Quality Report — baseline
+# Data Quality Report — baseline_quality
 
 ## Dataset profile
 
 | Field | Value |
 | --- | --- |
-| rows | 24 |
-| columns | ['paper_id', 'title', 'summary', 'authors', 'categories', 'primary_category', 'published', 'updated', 'abs_url', 'pdf_url', 'comment', 'age_days', 'authors_joined', 'categories_joined', 'summary_chars', 'text_for_embedding'] |
-| unique_paper_ids | 24 |
+| Rows | 24 |
+| Columns | 16 |
+| Unique paper IDs | 24 |
+| Overall quality status | **PASS** |
+
+The dataset contains the following columns: `paper_id`, `title`, `summary`, `authors`, `categories`, `primary_category`, `published`, `updated`, `abs_url`, `pdf_url`, `comment`, `age_days`, `authors_joined`, `categories_joined`, `summary_chars`, and `text_for_embedding`.
 
 ## Quality gates
 
-Overall status: **PASS** (17/17 gates passed)
+Overall status: **PASS**. All 12 executed checks passed; 2 optional checks were skipped because their input artifacts were not supplied to the quality checker.
 
-| Check | Result |
-| --- | --- |
-| schema | PASS (missing_columns=[]) |
-| row_count | PASS (value=24, expected=> 0) |
-| paper_id_complete | PASS (blank_count=0) |
-| paper_id_unique | PASS (duplicate_id_count=0, duplicate_row_count=0) |
-| title_complete | PASS (blank_count=0) |
-| summary_complete | PASS (blank_count=0) |
-| summary_min_length | PASS (min_chars=20, short_count=0) |
-| summary_chars_consistent | PASS (mismatch_count=0) |
-| embedding_text_complete | PASS (blank_count=0) |
-| published_valid | PASS (invalid_count=0) |
-| age_days_valid | PASS (invalid_count=0) |
-| freshness | PASS (stale_rows=0, threshold_days=180) |
-| source_reconciliation | PASS (raw_rows=24, clean_rows=24, clean_ids_not_in_raw_count=0) |
-| evaluation_schema | PASS (missing_columns=[]) |
-| evaluation_samples_complete | PASS (blank_count=0, samples=18) |
-| evaluation_sample_id_unique | PASS (duplicate_count=0) |
-| evaluation_ground_truth_ids_valid | PASS (ground_truth_doc_count=18, unknown_doc_id_count=0, covered_clean_doc_count=6) |
+| Check | Status | Evidence |
+| --- | --- | --- |
+| Schema | PASS | No required columns are missing |
+| Row count | PASS | 24 rows; expected more than 0 |
+| Paper ID completeness | PASS | 0 blank IDs |
+| Paper ID uniqueness | PASS | 0 duplicate IDs and 0 duplicate rows |
+| Title completeness | PASS | 0 blank titles |
+| Summary completeness | PASS | 0 blank summaries |
+| Summary minimum length | PASS | 0 summaries shorter than 20 characters |
+| Summary character consistency | PASS | 0 mismatches between `summary_chars` and actual length |
+| Embedding text completeness | PASS | 0 blank `text_for_embedding` values |
+| Published date validity | PASS | 0 invalid publication dates |
+| Age validity | PASS | 0 invalid or negative `age_days` values |
+| Freshness | PASS | 0 stale rows at the 180-day threshold |
+| Source reconciliation | SKIPPED | Raw records were not provided to this quality-check run |
+| Evaluation schema | SKIPPED | Evaluation set was not provided to this quality-check run |
 
 ## Freshness
 
 | Signal | Value |
 | --- | --- |
-| generated_at | 2026-08-06T04:33:54.692395+00:00 |
-| latest_published | 2026-08-01 |
-| oldest_published | 2026-02-12 |
-| min_age_days | 5 |
-| max_age_days | 175 |
-| stale_rows | 0 |
-| invalid_published_rows | 0 |
-| total_rows | 24 |
-| freshness_threshold_days | 180 |
-| is_fresh | PASS |
+| Latest publication date | 2026-08-01 |
+| Oldest publication date | 2026-02-12 |
+| Minimum age | 5 days |
+| Maximum age | 175 days |
+| Stale rows | 0 |
+| Invalid publication dates | 0 |
+| Total rows | 24 |
+| Freshness threshold | 180 days |
+| Overall freshness status | **PASS** |
 
-## Evidence
+All 24 records are within the configured 180-day freshness threshold. The oldest record is 175 days old, leaving a margin of 5 days before it would be classified as stale.
 
-Generated at: 2026-08-06T04:33:54.675854+00:00. Values are read from the clean, raw and evaluation artifacts supplied to the quality check.
+## Evidence and scope
+
+This report is derived only from the following saved artifacts:
+
+- `data/quality/baseline-quality_quality.json`, generated at `2026-08-06T04:53:49.317095+00:00`.
+- `data/quality/freshness_report.json`, generated at `2026-08-06T04:53:49.322771+00:00`.
+
+The available evidence supports dataset-level schema, completeness, uniqueness, validity, and freshness conclusions. It does not support raw-to-clean reconciliation or evaluation-set validation because those checks were skipped in the supplied baseline quality artifact.

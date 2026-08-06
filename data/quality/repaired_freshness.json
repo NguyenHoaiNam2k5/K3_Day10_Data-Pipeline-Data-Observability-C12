@@ -1,0 +1,12 @@
+{
+  "generated_at": "2026-08-06T05:09:23.449700+00:00",
+  "latest_published": "2026-08-01",
+  "oldest_published": "2026-02-12",
+  "min_age_days": 5,
+  "max_age_days": 175,
+  "stale_rows": 0,
+  "invalid_published_rows": 0,
+  "total_rows": 24,
+  "freshness_threshold_days": 180,
+  "is_fresh": true
+}

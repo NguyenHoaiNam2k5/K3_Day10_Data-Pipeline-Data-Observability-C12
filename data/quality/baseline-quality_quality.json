@@ -1,6 +1,6 @@
 {
-  "report_name": "baseline",
-  "generated_at": "2026-08-06T04:33:54.675854+00:00",
+  "report_name": "baseline_quality",
+  "generated_at": "2026-08-06T04:53:49.317095+00:00",
   "dataset": {
     "rows": 24,
     "columns": [
@@ -79,28 +79,13 @@
     },
     "source_reconciliation": {
       "passed": true,
-      "raw_rows": 24,
-      "clean_rows": 24,
-      "clean_ids_not_in_raw_count": 0
+      "status": "SKIPPED",
+      "reason": "raw_records not provided"
     },
     "evaluation_schema": {
       "passed": true,
-      "missing_columns": []
-    },
-    "evaluation_samples_complete": {
-      "passed": true,
-      "blank_count": 0,
-      "samples": 18
-    },
-    "evaluation_sample_id_unique": {
-      "passed": true,
-      "duplicate_count": 0
-    },
-    "evaluation_ground_truth_ids_valid": {
-      "passed": true,
-      "ground_truth_doc_count": 18,
-      "unknown_doc_id_count": 0,
-      "covered_clean_doc_count": 6
+      "status": "SKIPPED",
+      "reason": "eval_set not provided"
     }
   }
 }
