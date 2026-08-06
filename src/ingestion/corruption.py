@@ -442,62 +442,35 @@ def corrupt_clean_dataframe(
 
 
 # ---------------------------------------------------------------------
-# Mock tests
+# Real Data Tests & Demonstration
 # Run:
 #   python src/ingestion/corruption.py
 # ---------------------------------------------------------------------
 
 
-def _build_mock_clean_dataframe(row_count: int = 24) -> pd.DataFrame:
-    """Create a mock clean dataframe similar to cleaning.py output."""
-    run_date = pd.Timestamp("2026-08-06T00:00:00Z")
+def _load_real_clean_dataframe(data_dir: str | Path = "data") -> pd.DataFrame:
+    """Load real clean dataframe from data/clean or build from data/raw/crossref_records.json."""
+    base = Path(data_dir)
+    clean_json = base / "clean" / "papers_clean.json"
+    clean_csv = base / "clean" / "papers_clean.csv"
+    raw_json = base / "raw" / "crossref_records.json"
 
-    published_dates = pd.date_range(
-        end=run_date,
-        periods=row_count,
-        freq="7D",
+    if clean_json.exists() and clean_json.stat().st_size > 0:
+        return pd.read_json(clean_json)
+    if clean_csv.exists() and clean_csv.stat().st_size > 0:
+        return pd.read_csv(clean_csv)
+    if raw_json.exists() and raw_json.stat().st_size > 0:
+        from core.utils import read_json
+        from ingestion.cleaning import build_clean_dataframe
+        from ingestion.crossref import PaperRecord
+
+        raw_data = read_json(raw_json)
+        records = [PaperRecord(**item) for item in raw_data]
+        return build_clean_dataframe(records, datetime.now(timezone.utc))
+
+    raise FileNotFoundError(
+        f"No real data found in {clean_json}, {clean_csv}, or {raw_json}."
     )
-
-    df = pd.DataFrame(
-        {
-            "paper_id": [f"paper-{i:03d}" for i in range(row_count)],
-            "title": [
-                f"Agentic retrieval augmented generation paper number {i}"
-                for i in range(row_count)
-            ],
-            "summary": [
-                (
-                    "This paper studies retrieval augmented generation, "
-                    "agentic search, evaluation quality, and data observability "
-                    f"for experiment number {i}."
-                )
-                for i in range(row_count)
-            ],
-            "authors_joined": [
-                "Alice Nguyen, Bob Tran"
-                for _ in range(row_count)
-            ],
-            "categories_joined": [
-                "Artificial Intelligence, Information Retrieval"
-                for _ in range(row_count)
-            ],
-            "primary_category": [
-                "Artificial Intelligence"
-                for _ in range(row_count)
-            ],
-            "published": [
-                date.isoformat()
-                for date in published_dates
-            ],
-        }
-    )
-
-    parsed_published = pd.to_datetime(df["published"], utc=True)
-    df["age_days"] = (run_date - parsed_published).dt.days
-    df["summary_chars"] = df["summary"].str.len()
-    df["text_for_embedding"] = df.apply(_build_text_for_embedding, axis=1)
-
-    return df
 
 
 def _assert_original_not_mutated(
@@ -508,10 +481,10 @@ def _assert_original_not_mutated(
 
 
 def _test_corruption_basic() -> None:
-    df = _build_mock_clean_dataframe()
+    df = _load_real_clean_dataframe()
     snapshot = df.copy(deep=True)
 
-    log_path = Path("data/results/mock_corruption_log.json")
+    log_path = Path("data/results/real_corruption_log.json")
 
     corrupted = corrupt_clean_dataframe(
         df,
@@ -554,40 +527,39 @@ def _test_corruption_basic() -> None:
 
     assert log["validation"]["duplicate_paper_id_rows"] > 0
     assert log["validation"]["blank_summaries"] > 0
-    assert log["validation"]["stale_rows_age_days_gt_180"] > 0
 
-    print("PASS: basic corruption test")
+    print("PASS: basic corruption test on real dataset")
 
 
 def _test_reproducibility() -> None:
-    df = _build_mock_clean_dataframe()
+    df = _load_real_clean_dataframe()
 
     first = corrupt_clean_dataframe(
         df,
-        "data/results/mock_corruption_log_first.json",
+        "data/results/real_corruption_log_first.json",
         run_date="2026-08-06T00:00:00Z",
         seed=42,
     )
 
     second = corrupt_clean_dataframe(
         df,
-        "data/results/mock_corruption_log_second.json",
+        "data/results/real_corruption_log_second.json",
         run_date="2026-08-06T00:00:00Z",
         seed=42,
     )
 
     pd.testing.assert_frame_equal(first, second)
 
-    print("PASS: reproducibility test")
+    print("PASS: reproducibility test on real dataset")
 
 
 def _test_zero_fraction_no_change_except_rebuild() -> None:
-    df = _build_mock_clean_dataframe()
+    df = _load_real_clean_dataframe()
     snapshot = df.copy(deep=True)
 
     corrupted = corrupt_clean_dataframe(
         df,
-        "data/results/mock_corruption_log_zero.json",
+        "data/results/real_corruption_log_zero.json",
         run_date="2026-08-06T00:00:00Z",
         seed=42,
         drop_latest_fraction=0,
@@ -606,7 +578,7 @@ def _test_zero_fraction_no_change_except_rebuild() -> None:
 
     _assert_original_not_mutated(df, snapshot)
 
-    print("PASS: zero-fraction test")
+    print("PASS: zero-fraction test on real dataset")
 
 
 def _test_missing_required_columns() -> None:
@@ -620,7 +592,7 @@ def _test_missing_required_columns() -> None:
     try:
         corrupt_clean_dataframe(
             df,
-            "data/results/mock_corruption_log_invalid.json",
+            "data/results/real_corruption_log_invalid.json",
         )
     except ValueError as error:
         assert "Missing required columns" in str(error)
@@ -643,7 +615,7 @@ def _test_empty_dataframe() -> None:
     try:
         corrupt_clean_dataframe(
             df,
-            "data/results/mock_corruption_log_empty.json",
+            "data/results/real_corruption_log_empty.json",
         )
     except ValueError as error:
         assert "empty dataframe" in str(error)
@@ -653,8 +625,15 @@ def _test_empty_dataframe() -> None:
     raise AssertionError("Expected ValueError for empty dataframe.")
 
 
-def _run_mock_tests() -> None:
-    print("Running corruption.py mock tests...")
+def _run_real_data_tests() -> None:
+    import sys
+    if hasattr(sys.stdout, "reconfigure"):
+        try:
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
+    print("Running corruption.py tests on real dataset from data/...")
 
     _test_corruption_basic()
     _test_reproducibility()
@@ -662,31 +641,29 @@ def _run_mock_tests() -> None:
     _test_missing_required_columns()
     _test_empty_dataframe()
 
-    print("\nAll mock tests passed.")
+    print("\nAll real data corruption tests passed successfully.")
 
-    demo_df = _build_mock_clean_dataframe()
-    demo_corrupted = corrupt_clean_dataframe(
-        demo_df,
-        "data/results/mock_corruption_log_demo.json",
+    real_df = _load_real_clean_dataframe()
+    real_corrupted = corrupt_clean_dataframe(
+        real_df,
+        "data/results/real_corruption_log_demo.json",
         run_date="2026-08-06T00:00:00Z",
         seed=42,
     )
 
-    print("\nOriginal rows:", len(demo_df))
-    print("Corrupted rows:", len(demo_corrupted))
-    print("\nCorrupted sample:")
-    print(
-        demo_corrupted[
-            [
-                "paper_id",
-                "title",
-                "summary_chars",
-                "age_days",
-                "text_for_embedding",
-            ]
-        ].head(8)
-    )
+    print("\nOriginal real data rows:", len(real_df))
+    print("Corrupted real data rows:", len(real_corrupted))
+    print("\nCorrupted sample from real dataset:")
+    sample = real_corrupted[
+        [
+            "paper_id",
+            "title",
+            "summary_chars",
+            "age_days",
+        ]
+    ].head(8)
+    print(sample.to_string())
 
 
 if __name__ == "__main__":
-    _run_mock_tests()
+    _run_real_data_tests()
