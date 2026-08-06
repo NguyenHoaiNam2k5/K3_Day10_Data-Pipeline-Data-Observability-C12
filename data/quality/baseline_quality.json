@@ -1,0 +1,106 @@
+{
+  "report_name": "baseline",
+  "generated_at": "2026-08-06T04:33:54.675854+00:00",
+  "dataset": {
+    "rows": 24,
+    "columns": [
+      "paper_id",
+      "title",
+      "summary",
+      "authors",
+      "categories",
+      "primary_category",
+      "published",
+      "updated",
+      "abs_url",
+      "pdf_url",
+      "comment",
+      "age_days",
+      "authors_joined",
+      "categories_joined",
+      "summary_chars",
+      "text_for_embedding"
+    ],
+    "unique_paper_ids": 24
+  },
+  "passed": true,
+  "checks": {
+    "schema": {
+      "passed": true,
+      "missing_columns": []
+    },
+    "row_count": {
+      "passed": true,
+      "value": 24,
+      "expected": "> 0"
+    },
+    "paper_id_complete": {
+      "passed": true,
+      "blank_count": 0
+    },
+    "paper_id_unique": {
+      "passed": true,
+      "duplicate_id_count": 0,
+      "duplicate_row_count": 0
+    },
+    "title_complete": {
+      "passed": true,
+      "blank_count": 0
+    },
+    "summary_complete": {
+      "passed": true,
+      "blank_count": 0
+    },
+    "summary_min_length": {
+      "passed": true,
+      "min_chars": 20,
+      "short_count": 0
+    },
+    "summary_chars_consistent": {
+      "passed": true,
+      "mismatch_count": 0
+    },
+    "embedding_text_complete": {
+      "passed": true,
+      "blank_count": 0
+    },
+    "published_valid": {
+      "passed": true,
+      "invalid_count": 0
+    },
+    "age_days_valid": {
+      "passed": true,
+      "invalid_count": 0
+    },
+    "freshness": {
+      "passed": true,
+      "stale_rows": 0,
+      "threshold_days": 180
+    },
+    "source_reconciliation": {
+      "passed": true,
+      "raw_rows": 24,
+      "clean_rows": 24,
+      "clean_ids_not_in_raw_count": 0
+    },
+    "evaluation_schema": {
+      "passed": true,
+      "missing_columns": []
+    },
+    "evaluation_samples_complete": {
+      "passed": true,
+      "blank_count": 0,
+      "samples": 18
+    },
+    "evaluation_sample_id_unique": {
+      "passed": true,
+      "duplicate_count": 0
+    },
+    "evaluation_ground_truth_ids_valid": {
+      "passed": true,
+      "ground_truth_doc_count": 18,
+      "unknown_doc_id_count": 0,
+      "covered_clean_doc_count": 6
+    }
+  }
+}

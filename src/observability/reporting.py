@@ -28,6 +28,8 @@ def _quality_rows(payload: dict[str, Any] | None) -> dict[str, dict[str, Any]]:
 def _check_summary(check: dict[str, Any] | None) -> str:
     if not check:
         return "N/A"
+    if check.get("status") == "SKIPPED":
+        return f"SKIPPED ({check.get('reason', '')})"
     detail = ", ".join(f"{key}={value}" for key, value in check.items() if key != "passed")
     return f"{'PASS' if check.get('passed') else 'FAIL'} ({detail})"
 
@@ -36,6 +38,25 @@ def _delta(after: Any, before: Any) -> str:
     if isinstance(after, (int, float)) and not isinstance(after, bool) and isinstance(before, (int, float)) and not isinstance(before, bool):
         return f"{after - before:+.4f}"
     return "N/A"
+
+
+def generate_quality_report(report_path, quality: dict[str, Any], freshness: dict[str, Any]) -> None:
+    """Render the saved quality/freshness payloads as a compact audit report."""
+    checks = _quality_rows(quality)
+    passed = sum(check.get("passed", False) for check in checks.values())
+    sections = [
+        f"# Data Quality Report — {quality.get('report_name', 'dataset')}",
+        "## Dataset profile",
+        _table(["Field", "Value"], [[key, value] for key, value in quality.get("dataset", {}).items()]),
+        "## Quality gates",
+        f"Overall status: **{_cell(quality.get('passed'))}** ({passed}/{len(checks)} gates passed)\n\n"
+        + _table(["Check", "Result"], [[name, _check_summary(check)] for name, check in checks.items()]),
+        "## Freshness",
+        _table(["Signal", "Value"], [[key, value] for key, value in freshness.items()]),
+        "## Evidence",
+        f"Generated at: {quality.get('generated_at', 'N/A')}. Values are read from the clean, raw and evaluation artifacts supplied to the quality check.",
+    ]
+    write_text(report_path, "\n\n".join(sections) + "\n")
 
 def generate_phase1_report(
     report_path,
